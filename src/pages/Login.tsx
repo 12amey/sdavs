@@ -34,22 +34,8 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [focused, setFocused] = useState<string | null>(null);
-    const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-    const cardRef = useRef<HTMLDivElement>(null);
     const { login } = useAuth();
     const navigate = useNavigate();
-
-    /* 3D tilt on mouse move */
-    useEffect(() => {
-        const handleMove = (e: MouseEvent) => {
-            setMousePos({ x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight });
-        };
-        window.addEventListener('mousemove', handleMove);
-        return () => window.removeEventListener('mousemove', handleMove);
-    }, []);
-
-    const tiltX = (mousePos.y - 0.5) * 10;
-    const tiltY = (mousePos.x - 0.5) * -10;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,10 +110,8 @@ export default function Login() {
 
             {/* Login Card */}
             <div
-                ref={cardRef}
                 className="relative w-full max-w-md animate-fadeInUp"
                 style={{
-                    transform: `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
                     transition: 'transform 0.1s ease-out',
                     zIndex: 10,
                 }}

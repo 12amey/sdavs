@@ -18,7 +18,6 @@ function StatCard({
     accent?: string; icon: string; delay?: number;
 }) {
     const cardRef = useRef<HTMLDivElement>(null);
-    const [tilt, setTilt] = useState({ x: 0, y: 0 });
     const [hovered, setHovered] = useState(false);
 
     const accentColors: Record<string, { text: string; glow: string; bg: string; border: string }> = {
@@ -32,11 +31,7 @@ function StatCard({
     const c = accentColors[accent] || accentColors.cyan;
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        const rect = cardRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        const x = ((e.clientY - rect.top) / rect.height - 0.5) * 12;
-        const y = -((e.clientX - rect.left) / rect.width - 0.5) * 12;
-        setTilt({ x, y });
+        // Tilt disabled for stability
     };
 
     return (
@@ -48,15 +43,15 @@ function StatCard({
                 border: `1px solid ${hovered ? c.border : 'rgba(255,255,255,0.06)'}`,
                 boxShadow: hovered ? `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${c.glow}` : '0 10px 40px rgba(0,0,0,0.3)',
                 transform: hovered
-                    ? `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(10px)`
-                    : 'perspective(800px) rotateX(0) rotateY(0)',
+                    ? `translateZ(10px)`
+                    : 'none',
                 transition: hovered ? 'box-shadow 0.3s, border 0.3s, background 0.3s, transform 0.15s ease-out' : 'all 0.4s ease',
                 animationDelay: `${delay}ms`,
                 cursor: 'default',
             }}
             onMouseMove={handleMouseMove}
             onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => { setHovered(false); setTilt({ x: 0, y: 0 }); }}
+            onMouseLeave={() => { setHovered(false); }}
         >
             <div
                 className="absolute top-0 left-0 right-0 h-px"
