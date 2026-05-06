@@ -290,9 +290,27 @@ export default function Login() {
                             Continue with Google
                         </button>
 
-                        <p className="text-center text-[10px]" style={{ color: 'rgba(148,163,184,0.3)' }}>
-                            Demo: any username &amp; password · or use Google OAuth
-                        </p>
+                        <div className="flex flex-col gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    localStorage.setItem('sdavs_user', JSON.stringify({
+                                        id: 'demo-admin',
+                                        username: 'admin',
+                                        email: 'admin@sdavs.com',
+                                        role: 'admin'
+                                    }));
+                                    window.location.href = '/';
+                                }}
+                                className="w-full py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-cyan-500/30 hover:bg-cyan-500/10 transition-all text-cyan-400"
+                                style={{ background: 'rgba(0,212,255,0.05)' }}
+                            >
+                                ⚡ Quick Demo Access (No Password Required)
+                            </button>
+                            <p className="text-center text-[9px] uppercase tracking-tighter" style={{ color: 'rgba(148,163,184,0.4)' }}>
+                                Use this button for instant presentation access
+                            </p>
+                        </div>
                     </form>
                 </div>
 
