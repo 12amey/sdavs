@@ -25,11 +25,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const checkSession = async () => {
-            // Priority 1: Check localStorage (best for demo stability)
+            // Priority 1: Instant check of localStorage
             const storedUser = localStorage.getItem('sdavs_user');
             if (storedUser) {
                 try {
-                    setUser(JSON.parse(storedUser));
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(parsedUser);
+                    // Stop loading IMMEDIATELY so ProtectedRoute doesn't redirect
                     setLoading(false);
                 } catch {
                     localStorage.removeItem('sdavs_user');
@@ -37,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             try {
-                // Priority 2: Check with backend to see if we can sync
+                // Priority 2: Silent background sync with backend
                 const response = await fetch(`${API_BASE}/user/me`, {
                     headers: { 'Accept': 'application/json' },
                     credentials: 'include'
@@ -55,9 +57,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setUser(caughtUser);
                         localStorage.setItem('sdavs_user', JSON.stringify(caughtUser));
                     }
+                } else if (response.status === 401 && !storedUser) {
+                    // Only clear and redirect if we don't even have a local user
+                    setUser(null);
                 }
             } catch (error) {
-                console.warn('Backend session check skipped (using local):', error);
+                console.warn('Backend sync skipped:', error);
             } finally {
                 setLoading(false);
             }
