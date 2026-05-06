@@ -4,12 +4,12 @@ services:
     name: satellite-python-service
     env: python
     buildCommand: "cd python-cog-service && pip install -r requirements.txt"
-    startCommand: "cd python-cog-service && gunicorn app:app -b 0.0.0.0:$PORT"
+    startCommand: "cd python-cog-service && gunicorn app:app -b 0.0.0.0:10000"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.13
       - key: PORT
-        value: 5000
+        value: 10000
 
   # 2. Java Spring Boot Backend
   - type: web
@@ -18,15 +18,8 @@ services:
     dockerfilePath: Dockerfile.backend
     envVars:
       - key: PYTHON_SERVICE_URL
-        fromService:
-          type: web
-          name: satellite-python-service
-          property: url
+        value: "http://satellite-python-service:10000"
       - key: PYTHON_COG_URL
-        fromService:
-          type: web
-          name: satellite-python-service
-          property: url
+        value: "http://satellite-python-service:10000"
       - key: FRONTEND_URL
-        value: "https://your-vercel-frontend-url.vercel.app" # The user should replace this or we can leave it empty
-        sync: false
+        value: "https://your-vercel-frontend-url.vercel.app" # The user should update this later
