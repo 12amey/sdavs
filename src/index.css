@@ -232,13 +232,11 @@ html.lenis { height: auto; }
 
 /* ─── Premium Card Styles ─────────────────────────────────────────────── */
 .card-3d {
-  transform-style: preserve-3d;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
 }
 
 .card-3d:hover {
-  transform: translateY(-8px) rotateX(4deg) rotateY(-2deg);
+  transform: translateY(-8px);
   box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(0,212,255,0.1);
 }
 

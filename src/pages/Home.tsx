@@ -30,9 +30,6 @@ function StatCard({
 
     const c = accentColors[accent] || accentColors.cyan;
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        // Tilt disabled for stability
-    };
 
     return (
         <div
@@ -42,16 +39,13 @@ function StatCard({
                 background: hovered ? c.bg : 'rgba(15, 24, 42, 0.7)',
                 border: `1px solid ${hovered ? c.border : 'rgba(255,255,255,0.06)'}`,
                 boxShadow: hovered ? `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${c.glow}` : '0 10px 40px rgba(0,0,0,0.3)',
-                transform: hovered
-                    ? `translateZ(10px)`
-                    : 'none',
-                transition: hovered ? 'box-shadow 0.3s, border 0.3s, background 0.3s, transform 0.15s ease-out' : 'all 0.4s ease',
+                transform: 'none',
+                transition: hovered ? 'box-shadow 0.3s, border 0.3s, background 0.3s' : 'all 0.4s ease',
                 animationDelay: `${delay}ms`,
                 cursor: 'default',
             }}
-            onMouseMove={handleMouseMove}
             onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => { setHovered(false); }}
+            onMouseLeave={() => setHovered(false)}
         >
             <div
                 className="absolute top-0 left-0 right-0 h-px"
