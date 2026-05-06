@@ -7,7 +7,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class NdviService {
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String PYTHON_SERVICE_URL = "http://localhost:5000/ndvi";
+    private static final String PYTHON_SERVICE_URL = System.getenv("PYTHON_COG_URL") != null ? 
+            System.getenv("PYTHON_COG_URL") + "/ndvi" : "http://localhost:5000/ndvi";
 
     public byte[] computeNdviPng(String b04Url, String b08Url) throws Exception {
         System.out.println("🐍 Calling Python COG service...");
