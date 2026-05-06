@@ -17,6 +17,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        if (frontendUrl == null || frontendUrl.isEmpty()) {
+            frontendUrl = "http://localhost:5173";
+        }
+        final String finalFrontendUrl = frontendUrl;
+
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -30,8 +36,8 @@ public class SecurityConfig {
             )
             // Enable OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("${FRONTEND_URL:http://localhost:5173}", true)
-                .failureUrl("${FRONTEND_URL:http://localhost:5173}/login?error=true")
+                .defaultSuccessUrl(finalFrontendUrl, true)
+                .failureUrl(finalFrontendUrl + "/login?error=true")
             );
 
         return http.build();
