@@ -1,6 +1,6 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { satelliteApi } from '../services/api';
+import { useMemo } from 'react';
 
 interface DeforestationPanelProps {
     cityName: string;
@@ -18,6 +18,8 @@ export function DeforestationPanel({ cityName }: DeforestationPanelProps) {
         retry: false
     });
 
+
+
     if (isLoading) {
         return (
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
@@ -29,7 +31,20 @@ export function DeforestationPanel({ cityName }: DeforestationPanelProps) {
         );
     }
 
-    const latestData = satelliteData?.[0];
+    const latestData = satelliteData?.[0] || {};
+    const hasRealData = latestData.deforestationRisk !== undefined && latestData.deforestationRisk !== null && latestData.ndviValue !== 0;
+    
+    const defRisk = hasRealData ? latestData.deforestationRisk : 'LOW';
+    const ndviValue = hasRealData ? latestData.ndviValue : 0;
+
+    const getVegetationStatus = (ndvi: number) => {
+        if (ndvi > 0.6) return { label: 'Lush Canopy', color: 'text-green-400', desc: 'Dense, healthy forest cover' };
+        if (ndvi > 0.4) return { label: 'Healthy Vegetation', color: 'text-emerald-400', desc: 'Active growing vegetation' };
+        if (ndvi > 0.2) return { label: 'Sparse / Urban', color: 'text-yellow-400', desc: 'Limited vegetation or building density' };
+        return { label: 'Arid / Non-Vegetated', color: 'text-orange-400', desc: 'Dry surface or no plant life detected' };
+    };
+
+    const vegStatus = getVegetationStatus(ndviValue);
 
     const getRiskColor = (risk: string) => {
         switch (risk) {
@@ -40,66 +55,60 @@ export function DeforestationPanel({ cityName }: DeforestationPanelProps) {
         }
     };
 
-    if (!latestData || !latestData.deforestationRisk) {
-        return (
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
-                <h3 className="text-xl font-bold text-white flex items-center mb-4">
-                    <span className="text-2xl mr-2">🌳</span>
-                    Deforestation Risk
-                </h3>
-                <p className="text-slate-400 text-center py-8">
-                    No deforestation data available for {cityName}. Data will be available after the next scheduled update.
-                </p>
-            </div>
-        );
-    }
-
-    const colors = getRiskColor(latestData.deforestationRisk);
+    const colors = getRiskColor(defRisk);
 
     return (
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center">
-                    <span className="text-2xl mr-2">🌳</span>
-                    Deforestation Risk
-                </h3>
+                <div>
+                    <h3 className="text-xl font-bold text-white flex items-center">
+                        <span className="text-2xl mr-2">🌳</span>
+                        Deforestation Risk
+                    </h3>
+                    {!hasRealData && (
+                        <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-1.5 py-0.5 rounded border border-white/10 mt-1 inline-block">
+                            NO LIVE DATA
+                        </span>
+                    )}
+                </div>
                 <div className={`px-4 py-2 rounded-lg border ${colors.bg} ${colors.border}`}>
                     <div className={`text-lg font-bold ${colors.text} flex items-center`}>
                         <span className="mr-2">{colors.icon}</span>
-                        {latestData.deforestationRisk}
+                        {defRisk}
                     </div>
                 </div>
             </div>
 
             <div className="space-y-4">
                 {/* NDVI Change */}
-                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                    <div className="text-slate-400 text-sm mb-2">NDVI Change</div>
-                    <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-white">
-                            {latestData.ndviChangePercent ? latestData.ndviChangePercent.toFixed(1) : '0.0'}%
-                        </span>
-                        {latestData.ndviChangePercent && latestData.ndviChangePercent < 0 && (
-                            <span className="ml-2 text-red-400">↓ Vegetation loss</span>
-                        )}
-                        {latestData.ndviChangePercent && latestData.ndviChangePercent > 0 && (
-                            <span className="ml-2 text-green-400">↑ Vegetation gain</span>
-                        )}
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-5 group transition-all hover:border-emerald-500/50">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="text-slate-400 text-sm uppercase tracking-wider font-bold">Vegetation Health</div>
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border border-current ${vegStatus.color} bg-white/5`}>
+                            {vegStatus.label}
+                        </div>
                     </div>
+                    <div className="flex items-baseline mb-1">
+                        <span className={`text-4xl font-black ${vegStatus.color}`}>
+                            {(ndviValue * 100).toFixed(1)}%
+                        </span>
+                        <span className="ml-2 text-slate-500 text-xs font-bold uppercase">Index Density</span>
+                    </div>
+                    <p className="text-slate-400 text-xs font-medium italic">{vegStatus.desc}</p>
                 </div>
 
                 {/* Current vs Previous NDVI */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                        <div className="text-slate-400 text-sm">Current NDVI</div>
-                        <div className="text-2xl font-bold text-white">
-                            {latestData.ndviValue ? latestData.ndviValue.toFixed(3) : 'N/A'}
+                        <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Raw Index</div>
+                        <div className="text-xl font-black text-white">
+                            {ndviValue.toFixed(4)}
                         </div>
                     </div>
                     <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                        <div className="text-slate-400 text-sm">Previous NDVI</div>
-                        <div className="text-2xl font-bold text-white">
-                            {latestData.previousNdvi ? latestData.previousNdvi.toFixed(3) : 'N/A'}
+                        <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Status</div>
+                        <div className={`text-xl font-black ${hasRealData ? 'text-green-400' : 'text-slate-500'}`}>
+                            {hasRealData ? 'REAL-TIME' : 'N/A'}
                         </div>
                     </div>
                 </div>

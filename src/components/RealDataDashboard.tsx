@@ -37,11 +37,11 @@ const RealDataDashboard: React.FC<RealDataDashboardProps> = ({ onDataSourceChang
         status: backendHealth.status === 'OK' ? 'HEALTHY' : 'DEGRADED',
         database: {
           connected: backendHealth.status === 'OK',
-          responseTime: 50 // placeholder
+          responseTime: backendHealth.responseTime || 0
         },
         performance: {
-          activeAnalyses: 0,
-          avgProcessingTime: 100
+          activeAnalyses: backendHealth.activeAnalyses || 0,
+          avgProcessingTime: backendHealth.avgProcessingTime || 0
         }
       });
       setRealDataStats(apiStatus);

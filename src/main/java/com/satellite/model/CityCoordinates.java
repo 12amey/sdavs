@@ -18,7 +18,20 @@ public enum CityCoordinates {
     KOLHAPUR("Kolhapur", "Maharashtra", 16.7050, 74.2433),
     SATARA("Satara", "Maharashtra", 17.6805, 73.9915),
     NOIDA_EXT("Noida Extension", "NCR", 28.5900, 77.4500),
-    GURUGRAM("Gurugram", "NCR", 28.4595, 77.0266);
+    GURUGRAM("Gurugram", "NCR", 28.4595, 77.0266),
+    
+    // Central
+    NAGPUR("Nagpur", "Maharashtra", 21.1458, 79.0882),
+    BHOPAL("Bhopal", "Madhya Pradesh", 23.2599, 77.4126),
+    INDORE("Indore", "Madhya Pradesh", 22.7196, 75.8577),
+    
+    // Northeast
+    GUWAHATI("Guwahati", "Assam", 26.1445, 91.7362),
+    SHILLONG("Shillong", "Meghalaya", 25.5788, 91.8833),
+    
+    // Special
+    SUNDARBANS("Sundarbans", "West Bengal", 21.9497, 88.9100),
+    KAZIRANGA("Kaziranga", "Assam", 26.5775, 93.1711);
 
     private final String cityName;
     private final String region;

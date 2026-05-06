@@ -39,7 +39,7 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({
             <span className="text-sm font-medium text-gray-700">Avg NDVI</span>
           </div>
           <p className="text-2xl font-bold text-green-600">
-            {latestAnalysis ? latestAnalysis.avgNDVI.toFixed(3) : '0.000'}
+            {latestAnalysis ? (Number(latestAnalysis.avgNDVI) || 0).toFixed(3) : '0.000'}
           </p>
         </div>
         
@@ -49,7 +49,7 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({
             <span className="text-sm font-medium text-gray-700">Forest Cover</span>
           </div>
           <p className="text-2xl font-bold text-blue-600">
-            {latestAnalysis ? latestAnalysis.totalForestCover.toFixed(1) : '0.0'}%
+            {latestAnalysis ? (Number(latestAnalysis.totalForestCover) || 0).toFixed(1) : '0.0'}%
           </p>
         </div>
         
@@ -59,7 +59,7 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({
             <span className="text-sm font-medium text-gray-700">Water Bodies</span>
           </div>
           <p className="text-2xl font-bold text-cyan-600">
-            {latestAnalysis ? latestAnalysis.waterBodies.toFixed(1) : '0.0'}%
+            {latestAnalysis ? (Number(latestAnalysis.waterBodies) || 0).toFixed(1) : '0.0'}%
           </p>
         </div>
         
@@ -69,7 +69,7 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({
             <span className="text-sm font-medium text-gray-700">Urban Areas</span>
           </div>
           <p className="text-2xl font-bold text-gray-600">
-            {latestAnalysis ? latestAnalysis.urbanAreas.toFixed(1) : '0.0'}%
+            {latestAnalysis ? (Number(latestAnalysis.urbanAreas) || 0).toFixed(1) : '0.0'}%
           </p>
         </div>
       </div>

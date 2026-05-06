@@ -24,16 +24,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Restore user session from localStorage
-        const storedUser = localStorage.getItem('sdavs_user');
-        if (storedUser) {
+        const checkSession = async () => {
             try {
-                setUser(JSON.parse(storedUser));
-            } catch {
-                localStorage.removeItem('sdavs_user');
+                // Check with backend if there's an active session (cookie-based)
+                const response = await fetch(`${API_BASE}/user/me`, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        const caughtUser: User = {
+                            id: data.user.id,
+                            username: data.user.username,
+                            email: data.user.email,
+                            role: data.user.role,
+                        };
+                        setUser(caughtUser);
+                        localStorage.setItem('sdavs_user', JSON.stringify(caughtUser));
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Session check failed:', error);
             }
-        }
-        setLoading(false);
+
+            // Fallback: Restore user session from localStorage if backend check fails or is 401
+            const storedUser = localStorage.getItem('sdavs_user');
+            if (storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                } catch {
+                    localStorage.removeItem('sdavs_user');
+                }
+            }
+            setLoading(false);
+        };
+
+        checkSession().finally(() => setLoading(false));
     }, []);
 
     const login = async (username: string, password: string) => {
@@ -42,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
+                credentials: 'include'
             });
 
             const data = await response.json();
@@ -80,7 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         localStorage.removeItem('sdavs_user');
         // Fire-and-forget backend logout
-        fetch(`${API_BASE}/user/logout`, { method: 'POST' }).catch(() => { });
+        fetch(`${API_BASE}/user/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        }).catch(() => { });
     };
 
     const value = {

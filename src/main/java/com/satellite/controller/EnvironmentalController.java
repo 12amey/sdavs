@@ -2,6 +2,9 @@ package com.satellite.controller;
 
 import com.satellite.model.*;
 import com.satellite.service.*;
+import com.satellite.repository.SatelliteDataRepository;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +28,9 @@ public class EnvironmentalController {
     
     @Autowired
     private RiskScoringService riskScoringService;
+
+    @Autowired
+    private SatelliteDataRepository satelliteDataRepository;
     
     // ==================== Deforestation Endpoints ====================
     
@@ -157,6 +163,38 @@ public class EnvironmentalController {
         try {
             List<EnvironmentalRisk> risks = riskScoringService.getAllRisks();
             return ResponseEntity.ok(risks);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+    @GetMapping("/cities")
+    public ResponseEntity<List<String>> getAvailableCities() {
+        try {
+            return ResponseEntity.ok(satelliteDataRepository.findDistinctCities());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/ml/history/{cityName}")
+    public ResponseEntity<?> getMlHistory(@PathVariable String cityName) {
+        try {
+            Map<String, Object> history = new HashMap<>();
+            
+            // 1. NDVI & Temperature History
+            List<SatelliteData> satelliteHistory = satelliteDataRepository.findByCity(cityName);
+            
+            // 2. AQI History
+            List<AqiData> aqiHistory = aqiService.get7DayTrend(cityName);
+            
+            // 3. NDWI History
+            List<NdwiData> ndwiHistory = floodService.getNdwiTrend(cityName);
+            
+            history.put("satellite", satelliteHistory);
+            history.put("aqi", aqiHistory);
+            history.put("ndwi", ndwiHistory);
+            
+            return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }

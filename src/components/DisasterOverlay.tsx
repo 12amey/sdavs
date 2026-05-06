@@ -46,7 +46,8 @@ export function DisasterOverlay({ map }: DisasterOverlayProps) {
     queryKey: ['disasters'],
     queryFn: async () => {
       try {
-        const response = await fetch('http://localhost:8081/api/disasters');
+        const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+        const response = await fetch(`${baseUrl}/api/disasters`);
         if (!response.ok) {
           console.error('Failed to fetch disasters:', response.statusText);
           return []; // Return empty array on error

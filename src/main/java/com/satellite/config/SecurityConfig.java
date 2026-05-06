@@ -30,8 +30,8 @@ public class SecurityConfig {
             )
             // Enable OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("http://localhost:3000", true)
-                .failureUrl("http://localhost:3000/login?error=true")
+                .defaultSuccessUrl("${FRONTEND_URL:http://localhost:5173}", true)
+                .failureUrl("${FRONTEND_URL:http://localhost:5173}/login?error=true")
             );
 
         return http.build();
@@ -40,7 +40,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173", "http://localhost:8081"));
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        if (frontendUrl == null || frontendUrl.isEmpty()) {
+            configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173", "http://localhost:8081"));
+        } else {
+            configuration.setAllowedOrigins(Arrays.asList(frontendUrl, "http://localhost:3000", "http://localhost:5173", "http://localhost:8081"));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

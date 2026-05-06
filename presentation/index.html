@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SDAVS — Final Year Project Presentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#fff;overflow:hidden;height:100vh;width:100vw;}
+
+/* ── SLIDES ── */
+.slide{display:none;position:absolute;inset:0;padding:60px 80px;flex-direction:column;justify-content:center;animation:fadeIn .5s ease;}
+.slide.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;background:rgba(255,255,255,.08);backdrop-filter:blur(12px);padding:12px 24px;border-radius:50px;border:1px solid rgba(255,255,255,.12);z-index:100;}
+.nav button{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;opacity:.7;transition:.2s;}
+.nav button:hover{opacity:1;}
+.counter{font-size:13px;opacity:.6;min-width:50px;text-align:center;}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:.2s;}
+.dot.active{background:#38bdf8;transform:scale(1.3);}
+
+/* ── COMMON ── */
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 14px;border-radius:20px;margin-bottom:18px;}
+h1{font-size:52px;font-weight:900;line-height:1.1;margin-bottom:16px;}
+h2{font-size:38px;font-weight:800;line-height:1.2;margin-bottom:14px;}
+h3{font-size:20px;font-weight:700;margin-bottom:8px;}
+p{font-size:16px;line-height:1.7;opacity:.85;}
+.sub{font-size:18px;opacity:.7;line-height:1.6;}
+.accent{color:#38bdf8;}
+.accent2{color:#a78bfa;}
+.accent3{color:#34d399;}
+
+/* ── GRID CARDS ── */
+.grid{display:grid;gap:20px;margin-top:24px;}
+.grid-2{grid-template-columns:1fr 1fr;}
+.grid-3{grid-template-columns:1fr 1fr 1fr;}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:.3s;}
+.card:hover{background:rgba(255,255,255,.1);transform:translateY(-3px);}
+.card-icon{font-size:32px;margin-bottom:12px;}
+.pill{display:inline-block;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;margin:4px;}
+
+/* ── SLIDE-SPECIFIC GRADIENTS ── */
+.s1{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);}
+.s2{background:linear-gradient(135deg,#0f172a 0%,#162032 100%);}
+.s3{background:linear-gradient(135deg,#0d1f1a 0%,#0f172a 100%);}
+.s4{background:linear-gradient(135deg,#1a0f2e 0%,#0f172a 100%);}
+.s5{background:linear-gradient(135deg,#0f172a 0%,#1a1f0f 100%);}
+.s6{background:linear-gradient(135deg,#0f172a 0%,#1a0f0f 100%);}
+.s7{background:linear-gradient(135deg,#0d1a2e 0%,#0f172a 100%);}
+.s8{background:linear-gradient(135deg,#0f172a 0%,#1f1a0d 100%);}
+.s9{background:linear-gradient(135deg,#0a1f1a 0%,#0f172a 100%);}
+.s10{background:linear-gradient(135deg,#1e1b4b 0%,#0f172a 50%,#0d1f1a 100%);}
+
+/* Glow orbs */
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none;}
+.orb-blue{width:400px;height:400px;background:#3b82f6;top:-100px;right:-100px;}
+.orb-purple{width:300px;height:300px;background:#7c3aed;bottom:-80px;left:-80px;}
+.orb-green{width:350px;height:350px;background:#059669;top:-80px;right:-80px;}
+
+/* Slide 1 specific */
+.s1-title{font-size:62px;font-weight:900;background:linear-gradient(90deg,#38bdf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;}
+.s1-sub{font-size:20px;opacity:.7;margin-top:16px;}
+.s1-meta{display:flex;gap:32px;margin-top:48px;}
+.s1-meta span{font-size:14px;opacity:.6;}
+.s1-meta strong{display:block;font-size:16px;opacity:.9;}
+
+/* Progress bar */
+.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#38bdf8,#a78bfa);transition:width .4s ease;z-index:200;}
+
+/* Stat boxes */
+.stat-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px 28px;text-align:center;}
+.stat-num{font-size:40px;font-weight:900;}
+.stat-label{font-size:13px;opacity:.6;margin-top:4px;}
+
+/* Flow */
+.flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px;}
+.flow-step{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;}
+.flow-arrow{opacity:.5;font-size:18px;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px;}
+th{text-align:left;padding:12px 16px;background:rgba(255,255,255,.08);font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.7;}
+td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);}
+tr:hover td{background:rgba(255,255,255,.04);}
+
+/* List */
+.list{list-style:none;margin-top:16px;}
+.list li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:12px;align-items:flex-start;font-size:15px;opacity:.9;}
+.list li:last-child{border-bottom:none;}
+.list li::before{content:"▸";color:#38bdf8;flex-shrink:0;}
+
+/* Two col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide s1 active" id="slide-1">
+  <div class="orb orb-blue"></div>
+  <div class="orb orb-purple"></div>
+  <div class="tag" style="background:rgba(56,189,248,.15);color:#38bdf8;">🛰️ Final Year Project</div>
+  <div class="s1-title">SDAVS</div>
+  <h2 style="opacity:.6;font-size:22px;font-weight:400;margin-bottom:8px;">Satellite Data Analysis &amp; Visualization System</h2>
+  <p class="s1-sub">AI-powered environmental monitoring using real-time Sentinel-2 satellite imagery,<br>NDVI analysis, and machine learning-based land classification.</p>
+  <div class="s1-meta">
+    <div><span>Presented By</span><strong>Amey Deshmukh</strong></div>
+    <div><span>Technology</span><strong>Java · React · Python · ML</strong></div>
+    <div><span>Data Source</span><strong>ESA Copernicus / NASA EONET</strong></div>
+    <div><span>Year</span><strong>2026</strong></div>
+  </div>
+</div>
+
+<!-- SLIDE 2: PROBLEM STATEMENT -->
+<div class="slide s2" id="slide-2">
+  <div class="orb orb-blue"></div>
+  <div class="tag" style="background:rgba(239,68,68,.15);color:#f87171;">Problem Statement</div>
+  <h2>Why Does This Problem <span class="accent">Matter?</span></h2>
+  <div class="grid grid-2" style="margin-top:28px;">
+    <div class="card">
+      <div class="card-icon">🌍</div>
+      <h3>Environmental Degradation</h3>
+      <p>Deforestation, floods, and land degradation are accelerating globally. Monitoring these changes manually is slow and error-prone.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📡</div>
+      <h3>Data Silos</h3>
+      <p>Satellite data from ESA/NASA exists in raw formats (GeoTIFF, COG) that are inaccessible to non-experts without specialized tools.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏱️</div>
+      <h3>Delayed Response</h3>
+      <p>Traditional methods take days to generate NDVI reports. Real-time environmental risk assessment for disaster prevention is lacking.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <h3>No AI Integration</h3>
+      <p>Existing public tools lack ML-based land-use classification and predictive forecasting for vegetation and climate trends.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: OBJECTIVES -->
+<div class="slide s3" id="slide-3">
+  <div class="orb orb-green"></div>
+  <div class="tag" style="background:rgba(52,211,153,.15);color:#34d399;">Objectives</div>
+  <h2>What We <span class="accent3">Set Out</span> to Build</h2>
+  <div class="two-col" style="margin-top:28px;">
+    <ul class="list">
+      <li>Real-time NDVI calculation for any GPS coordinate on Earth</li>
+      <li>Interactive map with bounding-box area selection for instant analysis</li>
+      <li>Hourly automated satellite data sync for major Indian cities</li>
+      <li>Deforestation risk detection and flood early-warning system</li>
+      <li>NASA EONET integration for live global disaster event tracking</li>
+    </ul>
+    <ul class="list">
+      <li>EuroSAT-based ML model for 10-class land-use classification</li>
+      <li>NDVI trend forecasting using scikit-learn regression models</li>
+      <li>Secure multi-user access with OAuth 2.0 / Spring Security</li>
+      <li>Professional PDF report export for environmental analysis</li>
+      <li>Premium React dashboard with real-time charts and alerts</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 4: SYSTEM ARCHITECTURE -->
+<div class="slide s4" id="slide-4">
+  <div class="orb orb-purple"></div>
+  <div class="tag" style="background:rgba(167,139,250,.15);color:#a78bfa;">Architecture</div>
+  <h2>System <span class="accent2">Architecture</span></h2>
+  <div class="flow">
+    <div class="flow-step">🌐 React Frontend<br><small style="opacity:.6">TypeScript + Vite</small></div>
+    <div class="flow-arrow">⟷</div>
+    <div class="flow-step">☕ Spring Boot API<br><small style="opacity:.6">Java 23 + REST</small></div>
+    <div class="flow-arrow">⟷</div>
+    <div class="flow-step">🐍 Python ML Service<br><small style="opacity:.6">scikit-learn + rasterio</small></div>
+    <div class="flow-arrow">⟷</div>
+    <div class="flow-step">🗄️ Supabase DB<br><small style="opacity:.6">PostgreSQL</small></div>
+  </div>
+  <div class="grid grid-3" style="margin-top:20px;">
+    <div class="card">
+      <h3 class="accent2">External Data Sources</h3>
+      <p style="font-size:14px;margin-top:8px;">• ESA Copernicus Sentinel-2<br/>• NASA EONET Disaster Events<br/>• OpenWeatherMap API<br/>• Element84 STAC API</p>
+    </div>
+    <div class="card">
+      <h3 class="accent">Backend Services</h3>
+      <p style="font-size:14px;margin-top:8px;">• REST Controllers (MVC)<br/>• Hibernate ORM + JPA<br/>• Scheduled data pipelines<br/>• Spring Security / OAuth 2.0</p>
+    </div>
+    <div class="card">
+      <h3 class="accent3">Frontend Modules</h3>
+      <p style="font-size:14px;margin-top:8px;">• Leaflet interactive maps<br/>• Recharts data visualization<br/>• Framer Motion animations<br/>• Tailwind CSS design system</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: TECHNOLOGY STACK -->
+<div class="slide s5" id="slide-5">
+  <div class="orb orb-green"></div>
+  <div class="tag" style="background:rgba(52,211,153,.15);color:#34d399;">Tech Stack</div>
+  <h2>Technologies <span class="accent3">Used</span></h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill" style="background:rgba(56,189,248,.15);color:#38bdf8;">Frontend</span></td><td>React 18 · TypeScript · Vite · Tailwind · Leaflet</td><td>Interactive UI &amp; mapping</td></tr>
+      <tr><td><span class="pill" style="background:rgba(251,146,60,.15);color:#fb923c;">Backend</span></td><td>Spring Boot 3.2 · Java 23 · Hibernate · Spring Security</td><td>REST API &amp; business logic</td></tr>
+      <tr><td><span class="pill" style="background:rgba(167,139,250,.15);color:#a78bfa;">ML Service</span></td><td>Python 3.11 · scikit-learn · rasterio · NumPy · Pillow</td><td>NDVI + land classification</td></tr>
+      <tr><td><span class="pill" style="background:rgba(52,211,153,.15);color:#34d399;">Database</span></td><td>PostgreSQL · Supabase (Cloud)</td><td>Data persistence &amp; storage</td></tr>
+      <tr><td><span class="pill" style="background:rgba(239,68,68,.15);color:#f87171;">External APIs</span></td><td>ESA STAC · NASA EONET · OpenWeatherMap</td><td>Real-world satellite data</td></tr>
+      <tr><td><span class="pill" style="background:rgba(255,255,255,.1);color:#ccc;">DevOps</span></td><td>Maven · npm/bun · PowerShell scripts</td><td>Build &amp; deployment</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SLIDE 6: KEY FEATURES -->
+<div class="slide s6" id="slide-6">
+  <div class="orb" style="width:350px;height:350px;background:#dc2626;top:-80px;right:-80px;"></div>
+  <div class="tag" style="background:rgba(239,68,68,.15);color:#f87171;">Core Features</div>
+  <h2>What SDAVS <span style="color:#f87171;">Can Do</span></h2>
+  <div class="grid grid-3" style="margin-top:22px;">
+    <div class="card">
+      <div class="card-icon">🌿</div>
+      <h3>NDVI Analysis</h3>
+      <p style="font-size:14px;">Real-time vegetation health index for any coordinate. Formula: (NIR−Red)/(NIR+Red)</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗺️</div>
+      <h3>Interactive Map</h3>
+      <p style="font-size:14px;">Leaflet map with click-to-analyze and bounding-box area selection.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <h3>ML Classification</h3>
+      <p style="font-size:14px;">EuroSAT-based 10-class classifier: Forest, Crop, River, Industrial, etc.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚨</div>
+      <h3>Risk Alerts</h3>
+      <p style="font-size:14px;">Automated deforestation risk and flood warnings based on NDVI trend changes.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛰️</div>
+      <h3>NASA EONET Feed</h3>
+      <p style="font-size:14px;">Live global natural disaster tracking — fires, storms, floods in real-time.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📄</div>
+      <h3>PDF Reports</h3>
+      <p style="font-size:14px;">Export professional environmental analysis reports with charts and metadata.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: ML MODULE -->
+<div class="slide s7" id="slide-7">
+  <div class="orb orb-blue"></div>
+  <div class="tag" style="background:rgba(56,189,248,.15);color:#38bdf8;">Machine Learning</div>
+  <h2>ML &amp; AI <span class="accent">Intelligence</span> Module</h2>
+  <div class="two-col" style="margin-top:28px;">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>🏷️ EuroSAT Image Classifier</h3>
+        <p style="font-size:14px;margin-top:8px;">Classifies satellite images into <strong>10 land-use categories</strong> using color-statistics similarity against 500 EuroSAT RGB training samples. Includes anti-screenshot validation checks.</p>
+        <div style="margin-top:12px;">
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">Forest</span>
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">River</span>
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">AnnualCrop</span>
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">Industrial</span>
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">SeaLake</span>
+          <span class="pill" style="background:rgba(52,211,153,.1);color:#34d399;font-size:12px;">Residential</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📈 NDVI Trend Forecasting</h3>
+        <p style="font-size:14px;margin-top:8px;">scikit-learn regression models predict future NDVI values and vegetation trends. Trained on historical Sentinel-2 time-series data.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>⚙️ COG Processing Pipeline</h3>
+        <p style="font-size:14px;margin-top:8px;">Python + rasterio processes Cloud Optimized GeoTIFFs (COG) from the STAC API. Extracts spectral bands (NIR, Red, Green, Blue), computes NDVI, and returns geospatial metadata.</p>
+        <div class="flow" style="margin-top:14px;">
+          <div class="flow-step" style="font-size:12px;">STAC URL</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="font-size:12px;">rasterio</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="font-size:12px;">Band Extract</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="font-size:12px;">NDVI JSON</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: DATA FLOW -->
+<div class="slide s8" id="slide-8">
+  <div class="orb" style="width:350px;height:350px;background:#d97706;top:-80px;right:-80px;"></div>
+  <div class="tag" style="background:rgba(251,191,36,.15);color:#fbbf24;">Data Flow</div>
+  <h2>How Data <span style="color:#fbbf24;">Flows</span> Through SDAVS</h2>
+  <div class="grid grid-2" style="margin-top:24px;">
+    <div>
+      <h3 class="accent" style="margin-bottom:12px;">🔄 Automated Pipeline (Hourly)</h3>
+      <ul class="list">
+        <li>Scheduler triggers for all major Indian cities</li>
+        <li>Spring Boot queries Element84 STAC for latest Sentinel-2 tiles</li>
+        <li>Python COG service downloads and processes GeoTIFF bands</li>
+        <li>NDVI values + metadata persisted to Supabase PostgreSQL</li>
+        <li>Risk flags calculated and stored for dashboard display</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="accent3" style="margin-bottom:12px;">🖱️ On-Demand User Flow</h3>
+      <ul class="list">
+        <li>User clicks location or draws bounding box on map</li>
+        <li>Frontend sends coordinates to Spring Boot REST API</li>
+        <li>Backend queries STAC API for that region's latest imagery</li>
+        <li>Python ML service classifies image and computes NDVI</li>
+        <li>Results returned to UI with charts and risk assessment</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: RESULTS & IMPACT -->
+<div class="slide s9" id="slide-9">
+  <div class="orb orb-green"></div>
+  <div class="tag" style="background:rgba(52,211,153,.15);color:#34d399;">Results &amp; Impact</div>
+  <h2>Outcomes &amp; <span class="accent3">Impact</span></h2>
+  <div class="grid grid-3" style="margin-top:20px;margin-bottom:24px;">
+    <div class="stat-box">
+      <div class="stat-num accent3">10</div>
+      <div class="stat-label">Land-Use Classes Classified</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num accent">Real-Time</div>
+      <div class="stat-label">Satellite Data Processing</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num accent2">3-Tier</div>
+      <div class="stat-label">Microservice Architecture</div>
+    </div>
+  </div>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>🏆 Technical Achievements</h3>
+      <p style="font-size:14px;margin-top:8px;">Full-stack integration of Java, Python, and React. Real COG GeoTIFF processing. Secure OAuth 2.0 authentication. Automated scheduled data pipelines.</p>
+    </div>
+    <div class="card">
+      <h3>🌱 Social Impact</h3>
+      <p style="font-size:14px;margin-top:8px;">Empowers researchers, NGOs, and government bodies with free environmental monitoring. Supports early flood and deforestation warnings to aid conservation efforts.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: CONCLUSION -->
+<div class="slide s10" id="slide-10">
+  <div class="orb orb-blue"></div>
+  <div class="orb orb-purple"></div>
+  <div class="tag" style="background:rgba(167,139,250,.15);color:#a78bfa;">Conclusion</div>
+  <h2 style="font-size:42px;">SDAVS — <span class="accent">A Complete</span><br/>Environmental Intelligence Platform</h2>
+  <p class="sub" style="max-width:700px;margin-top:16px;">We successfully built a full-stack, AI-powered satellite monitoring platform that bridges the gap between raw ESA/NASA data and actionable environmental insights.</p>
+  <div class="grid grid-3" style="margin-top:28px;">
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">🔮</div>
+      <h3>Future Scope</h3>
+      <p style="font-size:13px;margin-top:6px;">Deep CNN models, mobile app, real-time WebSocket alerts, international city expansion.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">📚</div>
+      <h3>Learnings</h3>
+      <p style="font-size:13px;margin-top:6px;">Geospatial processing, REST microservices, ML model deployment, cloud database design.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">🙏</div>
+      <h3>Thank You</h3>
+      <p style="font-size:13px;margin-top:6px;">Questions welcome. Repository &amp; demo available for review.</p>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button onclick="go(-1)">&#8592;</button>
+  <div id="dots" style="display:flex;gap:8px;align-items:center;"></div>
+  <div class="counter" id="counter">1 / 10</div>
+  <button onclick="go(1)">&#8594;</button>
+</div>
+
+<script>
+const total = 10;
+let cur = 1;
+
+function buildDots(){
+  const d = document.getElementById('dots');
+  for(let i=1;i<=total;i++){
+    const dot = document.createElement('div');
+    dot.className='dot'+(i===1?' active':'');
+    dot.id='dot-'+i;
+    dot.onclick=()=>goTo(i);
+    d.appendChild(dot);
+  }
+}
+
+function goTo(n){
+  document.getElementById('slide-'+cur).classList.remove('active');
+  document.getElementById('dot-'+cur).classList.remove('active');
+  cur=Math.max(1,Math.min(total,n));
+  document.getElementById('slide-'+cur).classList.add('active');
+  document.getElementById('dot-'+cur).classList.add('active');
+  document.getElementById('counter').textContent=cur+' / '+total;
+  document.getElementById('progress').style.width=(cur/total*100)+'%';
+}
+
+function go(dir){goTo(cur+dir);}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+
+buildDots();
+document.getElementById('progress').style.width='10%';
+</script>
+</body>
+</html>

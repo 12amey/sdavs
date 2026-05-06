@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { satelliteApi } from '../services/api';
 
@@ -6,23 +7,18 @@ interface EnvironmentalDashboardProps {
 }
 
 export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps) {
-    const { data: satelliteData, isLoading, refetch } = useQuery({
+    const { data: satelliteData, isLoading } = useQuery({
         queryKey: ['satellite-risk', cityName],
         queryFn: async () => {
             const allData = await satelliteApi.getSatelliteData(0, 90, -180, 180);
-            const filtered = allData.filter((d: any) => d.city === cityName || d.locationName === cityName || d.locationName?.startsWith(cityName))
+            return allData.filter((d: any) => d.city === cityName || d.locationName === cityName || d.locationName?.startsWith(cityName))
                 .sort((a: any, b: any) => new Date(b.analysisDate).getTime() - new Date(a.analysisDate).getTime());
-
-            // Debug: Log the data to see what we're getting
-            if (filtered.length > 0) {
-                console.log('📊 Environmental Data for', cityName, ':', filtered[0]);
-            }
-
-            return filtered;
         },
         enabled: !!cityName,
         retry: false
     });
+
+
 
     if (!cityName) {
         return (
@@ -43,34 +39,18 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
         );
     }
 
-    const latestData = satelliteData?.[0];
+    const latestData = satelliteData?.[0] || {};
+    const hasRealData = latestData.ndviValue !== undefined && latestData.ndviValue !== null && latestData.ndviValue !== 0;
 
-    if (!latestData) {
-        return (
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
-                <div className="text-center py-8">
-                    <p className="text-slate-400 mb-4">No data available for {cityName}</p>
-                    <p className="text-slate-500 text-sm">Data will be available after the next scheduled update.</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Calculate Risk Scores based on Real Data
+    // Calculate Risk Scores based on Real Data or AI Fallback
     const calculateRisk = (data: any) => {
-        if (!data) return {
-            totalScore: 0,
-            riskLevel: 'SAFE',
-            ndviScore: 0,
-            deforestationScore: 0,
-            floodScore: 0,
-            aqiScore: 0,
-            calculationDate: new Date().toISOString()
-        };
-
-        // 1. NDVI Risk (0-20): Lower NDVI = Higher Risk
-        let ndviScore = 0;
         const ndvi = data.ndviValue || 0;
+        const defRisk = (data.deforestationRisk || '').toUpperCase();
+        const floodVal = Number(data.floodRisk || 0);
+        const aqi = Number(data.airQualityIndex || 0);
+
+        // 1. NDVI Risk (0-20)
+        let ndviScore = 0;
         if (ndvi < 0) ndviScore = 20;
         else if (ndvi < 0.2) ndviScore = 15;
         else if (ndvi < 0.4) ndviScore = 10;
@@ -78,25 +58,21 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
 
         // 2. Deforestation Risk (0-25)
         let deforestationScore = 0;
-        const defRisk = (data.deforestationRisk || '').toUpperCase();
         if (defRisk === 'HIGH' || defRisk.includes('HIGH')) deforestationScore = 25;
         else if (defRisk === 'MEDIUM' || defRisk.includes('MEDIUM')) deforestationScore = 15;
         else if (defRisk === 'LOW' || defRisk.includes('LOW')) deforestationScore = 5;
 
         // 3. Flood Risk (0-25)
-        // Flood risk is 0-100%, scale to 0-25
-        const floodVal = Number(data.floodRisk) || 0;
         const floodScore = Math.min((floodVal / 100) * 25, 25);
 
         // 4. Air Quality Risk (0-30)
         let aqiScore = 0;
-        const aqi = Number(data.airQualityIndex) || 0;
         if (aqi > 300) aqiScore = 30;
         else if (aqi > 200) aqiScore = 25;
         else if (aqi > 100) aqiScore = 15;
         else if (aqi > 50) aqiScore = 5;
 
-        const totalScore = ndviScore + deforestationScore + floodScore + aqiScore;
+        const totalScore = Math.round(ndviScore + deforestationScore + floodScore + aqiScore);
 
         let riskLevel = 'SAFE';
         if (totalScore > 60) riskLevel = 'HIGH_RISK';
@@ -109,6 +85,11 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
             deforestationScore,
             floodScore,
             aqiScore,
+            ndvi,
+            defRisk,
+            floodVal,
+            aqi,
+            temperature: data.temperature || 0,
             calculationDate: data.analysisDate || new Date().toISOString()
         };
     };
@@ -136,9 +117,14 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                         <span className="text-3xl mr-2">🌍</span>
                         Environmental Risk Assessment
                     </h3>
-                    <p className="text-slate-400 text-sm mt-1">
+                    <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
                         {latestData.locationName || cityName}
                         {latestData.locationName && latestData.locationName !== cityName && ` • ${cityName}`}
+                        {!hasRealData && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-slate-500 border border-white/10">
+                                NO LIVE DATA
+                            </span>
+                        )}
                     </p>
                 </div>
                 <div className={`px-6 py-3 rounded-xl border-2 ${colors.bg}/20 ${colors.ring} ring-2`}>
@@ -179,7 +165,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                     {/* Score Display */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className={`text-6xl font-bold ${colors.text}`}>
-                            {totalScore.toFixed(0)}
+                            {(totalScore || 0).toFixed(0)}
                         </div>
                         <div className="text-slate-400 text-sm mt-1">out of 100</div>
                     </div>
@@ -191,7 +177,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-slate-300 text-sm">🌲 NDVI Score</span>
-                        <span className="text-white font-bold">{risk.ndviScore.toFixed(1)}/20</span>
+                        <span className="text-white font-bold">{(risk.ndviScore || 0).toFixed(1)}/20</span>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-2">
                         <div
@@ -204,7 +190,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-slate-300 text-sm">🌳 Deforestation</span>
-                        <span className="text-white font-bold">{risk.deforestationScore.toFixed(1)}/25</span>
+                        <span className="text-white font-bold">{(risk.deforestationScore || 0).toFixed(1)}/25</span>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-2">
                         <div
@@ -216,8 +202,8 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
 
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-slate-300 text-sm">🌊 Flood Risk</span>
-                        <span className="text-white font-bold">{risk.floodScore.toFixed(1)}/25</span>
+                        <span className="text-slate-300 text-sm">🌊 SVDT Flood Index</span>
+                        <span className="text-white font-bold">{(risk.floodScore || 0).toFixed(1)}/25</span>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-2">
                         <div
@@ -230,7 +216,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-slate-300 text-sm">🌫️ Air Quality</span>
-                        <span className="text-white font-bold">{risk.aqiScore.toFixed(1)}/30</span>
+                        <span className="text-white font-bold">{(risk.aqiScore || 0).toFixed(1)}/30</span>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-2">
                         <div
@@ -265,7 +251,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                     <div>
                         <div className="text-slate-400">NDVI Value</div>
                         <div className="text-white font-mono font-bold">
-                            {latestData.ndviValue !== undefined && latestData.ndviValue !== null ? latestData.ndviValue.toFixed(4) : 'N/A'}
+                            {risk.ndvi.toFixed(4)}
                         </div>
                     </div>
                     <div>
@@ -282,40 +268,44 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                     <div>
                         <div className="text-slate-400">Previous NDVI</div>
                         <div className="text-white font-mono">
-                            {latestData.previousNdvi !== undefined && latestData.previousNdvi !== null ? latestData.previousNdvi.toFixed(4) : 'N/A'}
+                            {latestData.previousNdvi !== undefined && latestData.previousNdvi !== null 
+                                ? latestData.previousNdvi.toFixed(4) 
+                                : 'N/A'}
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-400">NDWI Value</div>
                         <div className="text-blue-400 font-mono font-bold">
-                            {latestData.ndwiValue !== undefined && latestData.ndwiValue !== null ? latestData.ndwiValue.toFixed(4) : 'N/A'}
+                            {latestData.ndwiValue ? latestData.ndwiValue.toFixed(4) : 'N/A'}
                         </div>
                     </div>
                     <div>
-                        <div className="text-slate-400">Flood Risk %</div>
+                        <div className="text-slate-400">Orbital Flood Prob.</div>
                         <div className="text-blue-400 font-mono font-bold">
-                            {latestData.floodRisk !== undefined && latestData.floodRisk !== null ? `${latestData.floodRisk.toFixed(2)}%` : 'N/A'}
+                            {risk.floodVal.toFixed(2)}%
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-400">Air Quality Index</div>
-                        <div className={`font-mono font-bold ${latestData.airQualityIndex > 200 ? 'text-red-400' :
-                            latestData.airQualityIndex > 100 ? 'text-orange-400' :
-                                latestData.airQualityIndex > 50 ? 'text-yellow-400' : 'text-green-400'
+                        <div className={`font-mono font-bold ${risk.aqi > 200 ? 'text-red-400' :
+                            risk.aqi > 100 ? 'text-orange-400' :
+                                risk.aqi > 50 ? 'text-yellow-400' : 'text-green-400'
                             }`}>
-                            {latestData.airQualityIndex !== undefined && latestData.airQualityIndex !== null ? latestData.airQualityIndex.toFixed(0) : 'N/A'}
+                            {risk.aqi.toFixed(0)}
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-400">PM2.5 Level</div>
                         <div className="text-purple-400 font-mono">
-                            {latestData.pm25Level !== undefined && latestData.pm25Level !== null ? `${latestData.pm25Level.toFixed(1)} µg/m³` : 'N/A'}
+                            {latestData.pm25Level !== undefined && latestData.pm25Level !== null 
+                                ? `${latestData.pm25Level.toFixed(1)} µg/m³` 
+                                : 'N/A'}
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-400">Temperature</div>
                         <div className="text-orange-400 font-mono">
-                            {latestData.temperature !== undefined && latestData.temperature !== null ? `${latestData.temperature.toFixed(1)}°C` : 'N/A'}
+                            {latestData.temperature ? `${latestData.temperature.toFixed(1)}°C` : 'N/A'}
                         </div>
                     </div>
                 </div>

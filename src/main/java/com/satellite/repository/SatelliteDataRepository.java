@@ -13,7 +13,7 @@ import java.util.List;
 public interface SatelliteDataRepository extends JpaRepository<SatelliteData, Long> {
     
     @Query("SELECT s FROM SatelliteData s WHERE s.latitude BETWEEN :minLat AND :maxLat " +
-           "AND s.longitude BETWEEN :minLon AND :maxLon")
+           "AND s.longitude BETWEEN :minLon AND :maxLon ORDER BY s.analysisDate DESC")
     List<SatelliteData> findByCoordinateRange(
         @Param("minLat") Double minLat, 
         @Param("maxLat") Double maxLat,
@@ -58,6 +58,11 @@ public interface SatelliteDataRepository extends JpaRepository<SatelliteData, Lo
     List<SatelliteData> findByClassification(SatelliteData.Classification classification);
     
     List<SatelliteData> findByCity(String city);
+    
+    SatelliteData findTopByCityOrderByAnalysisDateDesc(String city);
+
+    @Query("SELECT DISTINCT s.city FROM SatelliteData s WHERE s.city IS NOT NULL")
+    List<String> findDistinctCities();
     
     // Alias for findByCityName - same as findByCity
     default List<SatelliteData> findByCityName(String cityName) {

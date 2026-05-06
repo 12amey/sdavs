@@ -1,0 +1,32 @@
+services:
+  # 1. Python ML Service
+  - type: web
+    name: satellite-python-service
+    env: python
+    buildCommand: "cd python-cog-service && pip install -r requirements.txt"
+    startCommand: "cd python-cog-service && gunicorn app:app -b 0.0.0.0:$PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: PORT
+        value: 5000
+
+  # 2. Java Spring Boot Backend
+  - type: web
+    name: satellite-java-backend
+    env: docker
+    dockerfilePath: Dockerfile.backend
+    envVars:
+      - key: PYTHON_SERVICE_URL
+        fromService:
+          type: web
+          name: satellite-python-service
+          property: url
+      - key: PYTHON_COG_URL
+        fromService:
+          type: web
+          name: satellite-python-service
+          property: url
+      - key: FRONTEND_URL
+        value: "https://your-vercel-frontend-url.vercel.app" # The user should replace this or we can leave it empty
+        sync: false

@@ -13,12 +13,12 @@ interface EnvironmentalData {
     ndviChangePercent?: number;
 }
 
-interface EnvironmentalDataTableProps {
+interface IntelligenceLedgerTableProps {
     data: EnvironmentalData[];
     loading?: boolean;
 }
 
-export function EnvironmentalDataTable({ data, loading }: EnvironmentalDataTableProps) {
+export function IntelligenceLedgerTable({ data, loading }: IntelligenceLedgerTableProps) {
     const [sortColumn, setSortColumn] = useState<keyof EnvironmentalData>('analysisDate');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [searchTerm, setSearchTerm] = useState('');
@@ -112,8 +112,8 @@ export function EnvironmentalDataTable({ data, loading }: EnvironmentalDataTable
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-white flex items-center">
-                    <span className="text-2xl mr-2">📊</span>
-                    Environmental Data Table
+                    <span className="text-2xl mr-2">📑</span>
+                    Intelligence Ledger Snapshot
                 </h3>
                 <div className="flex items-center space-x-3">
                     <input

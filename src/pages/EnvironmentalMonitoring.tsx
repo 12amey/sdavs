@@ -6,6 +6,7 @@ import { DeforestationPanel } from '../components/DeforestationPanel';
 import { FloodWarningPanel } from '../components/FloodWarningPanel';
 import { AirQualityPanel } from '../components/AirQualityPanel';
 import { INDIAN_CITIES, getNearestAreaName } from '../utils/indianCities';
+import CountryHealthSummary from '../components/CountryHealthSummary';
 
 export default function EnvironmentalMonitoring() {
     const [selectedCityName, setSelectedCityName] = useState('');
@@ -22,7 +23,7 @@ export default function EnvironmentalMonitoring() {
         if (!satelliteData) return [];
 
         // Collect unique entries from DB: keyed by city name, store representive record
-        const cityMap = new Map<string, { city: string; lat: number; lon: number; locationName?: string }>();
+        const cityMap = new Map<string, { city: string; lat: number; lon: number; locationName?: string; isComplete: boolean }>();
 
         satelliteData.forEach((d: any) => {
             const hasNDVI = d.ndviValue !== undefined && d.ndviValue !== null;
@@ -30,14 +31,17 @@ export default function EnvironmentalMonitoring() {
             const hasFloodRisk = d.floodRisk !== undefined && d.floodRisk !== null;
             const hasAQI = d.airQualityIndex !== undefined && d.airQualityIndex !== null;
 
-            if (hasNDVI && hasDeforestation && hasFloodRisk && hasAQI) {
+            const hasAnyData = hasNDVI || hasDeforestation || hasFloodRisk || hasAQI;
+
+            if (hasAnyData) {
                 const cityName = d.city || d.locationName?.split(' (')[0];
                 if (cityName && !cityMap.has(cityName)) {
                     cityMap.set(cityName, {
                         city: cityName,
                         lat: d.latitude,
                         lon: d.longitude,
-                        locationName: d.locationName
+                        locationName: d.locationName,
+                        isComplete: hasNDVI && hasDeforestation && hasFloodRisk && hasAQI
                     });
                 }
             }
@@ -105,9 +109,10 @@ export default function EnvironmentalMonitoring() {
                                         ? getNearestAreaName(city.lat, city.lon)
                                         : areaName;
                                     const displayLabel = enriched !== city.city ? enriched : city.city;
+                                    const statusEmoji = (city as any).isComplete ? '🟢' : '🟡';
                                     return (
                                         <option key={city.city} value={city.city}>
-                                            {displayLabel}
+                                            {statusEmoji} {displayLabel}
                                         </option>
                                     );
                                 })
@@ -119,6 +124,9 @@ export default function EnvironmentalMonitoring() {
                     </div>
                 </div>
             </div>
+
+            {/* National Health Context */}
+            <CountryHealthSummary />
 
             {/* Info Banner */}
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">

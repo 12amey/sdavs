@@ -181,8 +181,26 @@ class NASAEarthdataClient:
     
     def _extract_cloud_cover(self, entry: Dict) -> Optional[float]:
         """Extract cloud cover percentage from metadata"""
-        # This varies by satellite - implementation depends on metadata structure
-        return None
+        # Sentinel-2/Landsat-8 usually have cloud cover in 'cloud_cover' or 'CLOUDY_PIXEL_PERCENTAGE'
+        try:
+            # Check common metadata fields
+            for key in ['cloud_cover', 'cloudCover', 'CloudCover']:
+                val = entry.get(key)
+                if val is not None:
+                    return float(val)
+            
+            # Check browse links or other description fields
+            title = entry.get('title', '').upper()
+            if 'CLOUD' in title and '%' in title:
+                # Attempt to extract if in title
+                import re
+                match = re.search(r'(\d+(?:\.\d+)?)\s*%', title)
+                if match:
+                    return float(match.group(1))
+                    
+            return None
+        except:
+            return None
     
     def _extract_data_links(self, entry: Dict) -> Dict:
         """Extract download links for data files"""

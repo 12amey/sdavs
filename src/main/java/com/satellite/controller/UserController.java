@@ -6,12 +6,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * REST Controller for user authentication and management.
@@ -19,7 +23,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "*")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -114,7 +117,7 @@ public class UserController {
                 if (username.equalsIgnoreCase("admin")) {
                     newUser.setRole(User.Role.ADMIN);
                 } else {
-                    newUser.setRole(User.Role.RESEARCHER);
+                    newUser.setRole(User.Role.USER);
                 }
                 newUser = userRepository.save(newUser);
                 newUser.setLastLogin(LocalDateTime.now());
@@ -221,5 +224,76 @@ public class UserController {
             "userId", userId,
             "analyses", userOpt.get().getAnalyses() != null ? userOpt.get().getAnalyses() : java.util.Collections.emptyList()
         ));
+    }
+
+    /**
+     * GET /api/user/me
+     * Get current authenticated user session
+     */
+    @GetMapping("/me")
+    public ResponseEntity<Map<String, Object>> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            logger.warn("Session check (/me) called but authentication is null or not authenticated");
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "Not authenticated"
+            ));
+        }
+        
+        logger.info("Session check (/me) successful for user: {}", authentication.getName());
+
+        try {
+            User user = null;
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof OAuth2User) {
+                OAuth2User oauth2User = (OAuth2User) principal;
+                String email = oauth2User.getAttribute("email");
+                String name = oauth2User.getAttribute("name");
+
+                if (email == null) {
+                    return ResponseEntity.status(401).body(Map.of("success", false, "message", "Email not provided by Google"));
+                }
+
+                // Find or create user from OAuth
+                Optional<User> existingUser = userRepository.findByEmail(email);
+                if (existingUser.isPresent()) {
+                    user = existingUser.get();
+                    logger.debug("Found existing OAuth user: {}", email);
+                } else {
+                    // Auto-register OAuth user as RESEARCHER (or ADMIN if preferred)
+                    user = new User(email.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 4), email, "OAUTH_USER");
+                    user.setRole(User.Role.USER); 
+                    user = userRepository.save(user);
+                    logger.info("Auto-registered new Google user as RESEARCHER: {}", email);
+                }
+            } else {
+                // Regular session authentication (if string principal or other)
+                String username = authentication.getName();
+                user = userRepository.findByUsername(username).orElse(null);
+            }
+
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "User not found"));
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("user", Map.of(
+                "id", user.getId().toString(),
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "role", user.getRole().name().toLowerCase()
+            ));
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error retrieving current user: {}", e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "Internal server error"));
+        }
     }
 }

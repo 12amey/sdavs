@@ -79,13 +79,13 @@ export default function AIAnalysis() {
     let aiSummary = uploadMutation.data?.mlClassification?.summary;
     if (!aiSummary && uploadMutation.isSuccess) {
         if (satelliteConfidence < 20) {
-            aiSummary = `⚠️ WARNING: This image could not be verified as satellite data (${satelliteConfidence.toFixed(1)}% confidence). Results below are estimates only.`;
+            aiSummary = `⚠️ WARNING: This image could not be verified as satellite data (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). Results below are estimates only.`;
         } else if (satelliteConfidence < 45) {
-            aiSummary = `ℹ️ Image appears to be a satellite export or annotated satellite photo (${satelliteConfidence.toFixed(1)}% confidence). NDVI-equivalent vegetation analysis applied.`;
+            aiSummary = `ℹ️ Image appears to be a satellite export or annotated satellite photo (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). NDVI-equivalent vegetation analysis applied.`;
         } else if (euroSATClass) {
-            aiSummary = `Analysis complete using EuroSAT dataset: Image classified as "${euroSATClass}" with ${euroSATConfidence.toFixed(1)}% confidence. Satellite imagery confidence: ${satelliteConfidence.toFixed(1)}%.`;
+            aiSummary = `Analysis complete using EuroSAT dataset: Image classified as "${euroSATClass}" with ${(Number(euroSATConfidence) || 0).toFixed(1)}% confidence. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
         } else {
-            aiSummary = `Analysis complete: Vegetation health is ${healthyPercent.toFixed(1)}% optimal. Satellite imagery confidence: ${satelliteConfidence.toFixed(1)}%.`;
+            aiSummary = `Analysis complete: Vegetation health is ${(Number(healthyPercent) || 0).toFixed(1)}% optimal. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
         }
     }
 
@@ -166,7 +166,7 @@ export default function AIAnalysis() {
                             <div className="text-8xl mb-6">🚫</div>
                             <h2 className="text-3xl font-bold text-white mb-4">Cannot Analyse This Image</h2>
                             <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-8">
-                                The uploaded file does not appear to be satellite-related imagery (Confidence: {satelliteConfidence.toFixed(1)}%).
+                                The uploaded file does not appear to be satellite-related imagery (Confidence: {(Number(satelliteConfidence) || 0).toFixed(1)}%).
                                 Please upload a satellite image, GeoTIFF, or satellite screenshot.
                             </p>
                             <button
@@ -191,7 +191,7 @@ export default function AIAnalysis() {
                                 >
                                     <span className="text-2xl">⚠️</span>
                                     <div>
-                                        <p className="text-yellow-300 font-semibold">Low Satellite Confidence ({satelliteConfidence.toFixed(1)}%)</p>
+                                        <p className="text-yellow-300 font-semibold">Low Satellite Confidence ({(Number(satelliteConfidence) || 0).toFixed(1)}%)</p>
                                         <p className="text-yellow-200/80 text-sm mt-1">
                                             This image appears to be an annotated or exported satellite image (JPEG/PNG) rather than a raw GeoTIFF.
                                             Analysis uses RGB vegetation index — results are estimates. For best accuracy, upload a raw GeoTIFF file.
@@ -211,7 +211,7 @@ export default function AIAnalysis() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                     <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 border border-green-500/30 rounded-lg p-6 text-center">
                                         <div className="text-green-400 text-sm font-medium mb-1">Average NDVI</div>
-                                        <div className="text-4xl font-bold text-white mb-1">{avgNdvi.toFixed(3)}</div>
+                                        <div className="text-4xl font-bold text-white mb-1">{(Number(avgNdvi) || 0).toFixed(3)}</div>
                                         <div className="text-green-300 text-xs uppercase tracking-wider">{avgNdvi >= 0.5 ? 'Healthy' : 'Moderate'}</div>
                                     </div>
                                     <div className="bg-gradient-to-br from-blue-500/20 to-cyan-600/20 border border-blue-500/30 rounded-lg p-6 text-center">

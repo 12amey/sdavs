@@ -21,16 +21,18 @@ export default function SystemStatus() {
     const { data: health, isLoading: healthLoading } = useQuery<HealthMetrics>({
         queryKey: ['health'],
         queryFn: async () => {
-            const response = await fetch('http://localhost:8081/api/metrics/health');
+            const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+            const response = await fetch(`${baseUrl}/api/metrics/health`);
             return response.json();
         },
-        refetchInterval: 30000 // Refresh every 30 seconds
+        refetchInterval: 60000 // Refresh every 60 seconds
     });
 
     const { data: stats } = useQuery<Stats>({
         queryKey: ['stats'],
         queryFn: async () => {
-            const response = await fetch('http://localhost:8081/api/metrics/stats');
+            const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+            const response = await fetch(`${baseUrl}/api/metrics/stats`);
             return response.json();
         },
         refetchInterval: 60000
@@ -39,7 +41,8 @@ export default function SystemStatus() {
     const { data: performance } = useQuery({
         queryKey: ['performance'],
         queryFn: async () => {
-            const response = await fetch('http://localhost:8081/api/metrics/performance');
+            const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+            const response = await fetch(`${baseUrl}/api/metrics/performance`);
             return response.json();
         },
         refetchInterval: 10000
@@ -53,14 +56,13 @@ export default function SystemStatus() {
         );
     }
 
-    // Compute realistic metrics
-    const apiUptime = '99.9%';
-    const lastMLModelRefresh = '2 hours ago';
-    const dbSize = '2.4 GB';
-    const imageStorage = '185 MB';
+    // Compute metrics from real API data
     const displaySystemLoad = typeof performance?.systemLoad === 'number' && performance.systemLoad >= 0
         ? performance.systemLoad.toFixed(2)
         : 'N/A';
+        
+    const freeMemory = performance?.memory?.free || 'N/A';
+    const totalMemory = performance?.memory?.total || 'N/A';
 
     return (
         <div className="space-y-6">
@@ -222,26 +224,23 @@ export default function SystemStatus() {
                 className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700"
             >
                 <h3 className="text-xl font-bold text-white mb-4">📊 System Resources</h3>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                     <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                        <div className="text-blue-400 text-sm mb-1">API Uptime</div>
-                        <div className="text-2xl font-bold text-white">{apiUptime}</div>
-                        <div className="text-xs text-blue-300 mt-1">Last 30 days</div>
-                    </div>
-                    <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                        <div className="text-purple-400 text-sm mb-1">ML Model Refresh</div>
-                        <div className="text-lg font-bold text-white">{lastMLModelRefresh}</div>
-                        <div className="text-xs text-purple-300 mt-1">Last training</div>
+                        <div className="text-blue-400 text-sm mb-1">Session Uptime</div>
+                        <div className="text-2xl font-bold text-white">
+                            {health?.uptime ? (parseInt(health.uptime) > 3600 ? `${Math.floor(parseInt(health.uptime)/3600)}h ${Math.floor((parseInt(health.uptime)%3600)/60)}m` : health.uptime) : 'N/A'}
+                        </div>
+                        <div className="text-xs text-blue-300 mt-1">Current runtime</div>
                     </div>
                     <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                        <div className="text-green-400 text-sm mb-1">Database Size</div>
-                        <div className="text-2xl font-bold text-white">{dbSize}</div>
-                        <div className="text-xs text-green-300 mt-1">Total storage</div>
+                        <div className="text-green-400 text-sm mb-1">Total Heap</div>
+                        <div className="text-2xl font-bold text-white">{totalMemory}</div>
+                        <div className="text-xs text-green-300 mt-1">Allocated JVM memory</div>
                     </div>
                     <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                        <div className="text-orange-400 text-sm mb-1">Image Storage</div>
-                        <div className="text-2xl font-bold text-white">{imageStorage}</div>
-                        <div className="text-xs text-orange-300 mt-1">Cached images</div>
+                        <div className="text-orange-400 text-sm mb-1">Free RAM</div>
+                        <div className="text-2xl font-bold text-white">{freeMemory}</div>
+                        <div className="text-xs text-orange-300 mt-1">Available in JVM</div>
                     </div>
                 </div>
             </motion.div>
@@ -299,14 +298,20 @@ export default function SystemStatus() {
                         <div className="text-sm text-white">View Map</div>
                     </Link>
                     <button
-                        onClick={() => window.location.href = 'http://localhost:8081/api/satellite/trigger-update'}
+                        onClick={() => {
+                            const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+                            window.location.href = `${baseUrl}/api/satellite/trigger-update`;
+                        }}
                         className="p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500 rounded-lg text-center transition-all"
                     >
                         <div className="text-2xl mb-2">🔄</div>
                         <div className="text-sm text-white">Trigger Update</div>
                     </button>
                     <button
-                        onClick={() => window.location.href = 'http://localhost:8081/api/disasters/sync'}
+                        onClick={() => {
+                            const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
+                            window.location.href = `${baseUrl}/api/disasters/sync`;
+                        }}
                         className="p-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500 rounded-lg text-center transition-all"
                     >
                         <div className="text-2xl mb-2">🌍</div>

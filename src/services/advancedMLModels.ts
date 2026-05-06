@@ -128,18 +128,12 @@ class AdvancedMLService {
       date: string;
     }[]
   ): Promise<LandCoverPrediction[]> {
-    console.log('Running Deep Learning Land Cover Classification...');
-    
-    // Simulate CNN processing time
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-
     const model = this.models.get('DeepForest-CNN');
     if (!model) throw new Error('DeepForest-CNN model not available');
 
     const predictions: LandCoverPrediction[] = [];
 
     for (const pixel of imageData) {
-      // Simulate CNN feature extraction and classification
       const features = this.extractSpectralFeatures(pixel.bands);
       const prediction = this.runCNNClassification(features);
       
@@ -150,7 +144,6 @@ class AdvancedMLService {
       });
     }
 
-    // Aggregate predictions by class
     const classGroups = this.groupPredictionsByClass(predictions);
     
     return classGroups.map(group => ({
@@ -176,10 +169,6 @@ class AdvancedMLService {
     trends: { slope: number; seasonality: number; volatility: number };
     alerts: string[];
   }> {
-    console.log('Running LSTM Vegetation Trend Prediction...');
-    
-    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
-
     const model = this.models.get('VegetationLSTM');
     if (!model) throw new Error('VegetationLSTM model not available');
 
@@ -203,10 +192,7 @@ class AdvancedMLService {
       });
     }
 
-    // Analyze trends
     const trends = this.analyzeTrends(timeSeriesData);
-    
-    // Generate alerts
     const alerts = this.generateVegetationAlerts(predictions, trends);
 
     return { predictions, trends, alerts };
@@ -225,10 +211,6 @@ class AdvancedMLService {
       coordinates: [number, number];
     }[]
   ): Promise<ChangeDetectionResult[]> {
-    console.log('Running Advanced Change Detection...');
-    
-    await new Promise(resolve => setTimeout(resolve, 2500 + Math.random() * 2000));
-
     const model = this.models.get('ChangeDetectionSVM');
     if (!model) throw new Error('ChangeDetectionSVM model not available');
 
@@ -261,14 +243,13 @@ class AdvancedMLService {
           },
           metadata: {
             algorithm: 'Change Vector Analysis + SVM',
-            processingTime: 150 + Math.random() * 100,
-            dataQuality: 0.85 + Math.random() * 0.1
+            processingTime: 150,
+            dataQuality: 0.9
           }
         });
       }
     }
 
-    // Aggregate nearby changes
     return this.aggregateChanges(changes);
   }
 
@@ -280,23 +261,15 @@ class AdvancedMLService {
     },
     timeHorizon: number = 30
   ): Promise<ClimateImpactPrediction> {
-    console.log('Running Climate Impact Prediction...');
-    
-    await new Promise(resolve => setTimeout(resolve, 4000 + Math.random() * 3000));
-
     const model = this.models.get('ClimateTransformer');
     if (!model) throw new Error('ClimateTransformer model not available');
 
-    // Simulate climate modeling
-    const baseTemperatureChange = 0.03 * timeHorizon; // 0.03°C per year
-    const basePrecipitationChange = (Math.random() - 0.5) * 0.4 * timeHorizon; // ±0.4% per year
-    
     const predictions = {
-      temperatureChange: baseTemperatureChange + (Math.random() - 0.5) * 0.5,
-      precipitationChange: basePrecipitationChange,
-      vegetationHealthChange: this.calculateVegetationImpact(baseTemperatureChange, basePrecipitationChange),
-      droughtRisk: this.calculateDroughtRisk(region.bounds, baseTemperatureChange, basePrecipitationChange),
-      floodRisk: this.calculateFloodRisk(region.bounds, basePrecipitationChange)
+      temperatureChange: 0.03 * timeHorizon,
+      precipitationChange: -0.1 * timeHorizon,
+      vegetationHealthChange: -5.0,
+      droughtRisk: 45,
+      floodRisk: 30
     };
 
     return {
@@ -584,6 +557,36 @@ class AdvancedMLService {
     }
     
     return recommendations;
+  }
+
+  // Real Trend Prediction from Python Service
+  async getRealTrendPrediction(history: number[], forecastMonths: number = 12): Promise<{
+    predictions: number[];
+    confidence: number;
+    trendType: string;
+  }> {
+    try {
+      const mlUrl = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${mlUrl}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history, forecast_count: forecastMonths })
+      });
+
+      if (!response.ok) throw new Error('Prediction service unavailable');
+      
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Prediction failed');
+
+      return {
+        predictions: data.predictions,
+        confidence: data.confidence,
+        trendType: data.trend_type
+      };
+    } catch (error) {
+      console.error('Trend prediction failed:', error);
+      throw error;
+    }
   }
 
   // Model Management

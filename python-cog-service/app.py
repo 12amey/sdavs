@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 from ml_models import get_classifier, NDVICalculator
 from nasa_earthdata import NASAEarthdataClient, fetch_latest_sentinel2
 from land_cover_analyzer import LandCoverAnalyzer
+from cloud_detector import get_cloud_detector
+from predictor import get_predictor
 
 # Import EuroSAT classifier
 try:
@@ -61,7 +63,7 @@ def ndvi_stats():
         
         # If only tile_url is provided, assume it's B08 and try to find B04
         if b08_url and not b04_url:
-            b04_url = b08_url.replace('_B08.tif', '_B04.tif').replace('_B08_10m.tif', '_B04_10m.tif')
+            b04_url = b08_url.replace('_B08.tif', '_B04.tif').replace('_B08_10m.tif', '_B04_10m.tif').replace('/B08.tif', '/B04.tif')
             logger.info(f"Derived B04 URL: {b04_url}")
 
         if not b04_url or not b08_url:
@@ -140,6 +142,57 @@ def classify_image():
         
     except Exception as e:
         logger.error(f"Error classifying image: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e), "success": False}), 500
+
+@app.route('/predict', methods=['POST'])
+def predict_trend():
+    """
+    Predict future trend based on historical values
+    """
+    try:
+        data = request.json
+        historical_values = data.get('history', [])
+        forecast_count = data.get('forecast_count', 12)
+        
+        if not historical_values:
+            return jsonify({"error": "No historical data provided"}), 400
+        
+        predictor = get_predictor()
+        result = predictor.predict_trend(historical_values, forecast_count)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error in prediction endpoint: {str(e)}")
+        return jsonify({"error": str(e), "success": False}), 500
+
+@app.route('/detect-clouds', methods=['POST'])
+def detect_clouds():
+    """
+    Detect cloud cover from uploaded satellite image or multispectral bands
+    """
+    try:
+        if 'image' not in request.files:
+            return jsonify({"error": "No image file provided"}), 400
+        
+        file = request.files['image']
+        temp_path = f"/tmp/cloud_{file.filename}"
+        file.save(temp_path)
+        
+        try:
+            # Load and process image
+            img = Image.open(temp_path).convert('RGB')
+            img_array = np.array(img)
+            
+            # Detect clouds
+            detector = get_cloud_detector()
+            result = detector.detect_clouds(img_array)
+            
+            return jsonify(result)
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+    except Exception as e:
+        logger.error(f"Error detecting clouds: {str(e)}")
         return jsonify({"error": str(e), "success": False}), 500
 
 @app.route('/analyze', methods=['POST'])
@@ -253,6 +306,21 @@ def analyze_multispectral():
                     land_cover = {}
                     primary_land_use = "Unknown"
                 
+                # Cloud Detection
+                try:
+                    rgb_image = Image.open(temp_path).convert('RGB')
+                    rgb_array = np.array(rgb_image)
+                    
+                    # NIR band for better cloud detection if available
+                    nir_array = bands.get('B08') if 'B08' in bands else None
+                    
+                    cloud_detector = get_cloud_detector()
+                    cloud_result = cloud_detector.detect_clouds(rgb_array, nir_array=nir_array)
+                    logger.info(f"Cloud cover: {cloud_result['cloud_cover_percentage']}%")
+                except Exception as e:
+                    logger.warning(f"Cloud detection failed: {e}")
+                    cloud_result = {"cloud_cover_percentage": 0.0, "density": "Unknown", "success": False}
+
                 # Compile results with type conversion for JSON serialization
                 result = {
                     "success": True,
@@ -264,6 +332,7 @@ def analyze_multispectral():
                     "ml_classification": ml_result,
                     "land_cover": {k: float(v) for k, v in land_cover.items()} if land_cover else {},
                     "primary_land_use": str(primary_land_use),
+                    "cloud_analysis": cloud_result,
                     "method": "Real ML Analysis - PyTorch ResNet50",
                     "is_satellite_imagery": bool(True),
                     "validation_confidence": float(validation_result["confidence"])

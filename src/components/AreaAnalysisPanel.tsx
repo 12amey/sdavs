@@ -187,8 +187,9 @@ export function AreaAnalysisPanel({ bounds, onClose, isAnalyzing }: AreaAnalysis
                 const west = bounds.getWest();
                 const east = bounds.getEast();
 
+                const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:8081';
                 const response = await fetch(
-                    `http://localhost:8081/api/satellite/analyze-area?minLat=${south}&maxLat=${north}&minLon=${west}&maxLon=${east}`,
+                    `${baseUrl}/api/satellite/analyze-area?minLat=${south}&maxLat=${north}&minLon=${west}&maxLon=${east}`,
                     {
                         method: 'GET',
                         headers: { 'Accept': 'application/json' },

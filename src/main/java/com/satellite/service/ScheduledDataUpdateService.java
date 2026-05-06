@@ -128,29 +128,25 @@ public class ScheduledDataUpdateService {
         try {
             // Step 1: Query STAC API for latest imagery
             String tileUrl = queryStacApi(city);
-            if (tileUrl == null) {
-                logger.warn("No recent imagery found for {}", city.getCityName());
-                return false;
+            Double ndvi = null;
+            String classification = "MODERATE";
+            
+            if (tileUrl != null) {
+                // Step 2: Calculate NDVI using Python service
+                ndvi = calculateNdvi(tileUrl, city);
+                if (ndvi != null) {
+                    classification = classifyNdvi(ndvi);
+                }
+            } else {
+                logger.warn("No recent imagery found for {}. Saving partial record (AQI/Temp only).", city.getCityName());
             }
-            
-            // Step 2: Calculate NDVI using Python service
-            Double ndvi = calculateNdvi(tileUrl, city);
-            if (ndvi == null) {
-                logger.warn("NDVI calculation failed for {}", city.getCityName());
-                return false;
-            }
-            
-            // Step 3: Classify NDVI
-            String classification = classifyNdvi(ndvi);
-            
+
             // Step 4: Get previous data for comparison
-            SatelliteData data = satelliteDataRepository
-                .findByCity(city.getCityName())
-                .stream()
-                .findFirst()
-                .orElse(new SatelliteData());
+            SatelliteData data = new SatelliteData();
             
-            Double previousNdvi = data.getNdviValue();
+            SatelliteData previousData = satelliteDataRepository.findTopByCityOrderByAnalysisDateDesc(city.getCityName());
+            
+            Double previousNdvi = (previousData != null) ? previousData.getNdviValue() : null;
             
             // Step 5: Fetch environmental data
             logger.info("Fetching environmental data for {}", city.getCityName());
@@ -182,13 +178,17 @@ public class ScheduledDataUpdateService {
             // Step 6: Update database with all fields
             data.setLatitude(city.getLatitude());
             data.setLongitude(city.getLongitude());
-            data.setNdviValue(ndvi);
-            data.setClassification(SatelliteData.Classification.valueOf(classification));
+            if (ndvi != null) {
+                data.setNdviValue(ndvi);
+                data.setClassification(SatelliteData.Classification.valueOf(classification));
+            }
             data.setAnalysisDate(LocalDateTime.now());
             data.setCity(city.getCityName());
             data.setLocationName(city.getCityName() + " (" + city.getRegion() + ")");
+            data.setDataSource(tileUrl != null ? "SENTINEL-2" : "SENSOR-ONLY");
+
             // Set previous NDVI for tracking
-            if (previousNdvi != null) {
+            if (previousNdvi != null && ndvi != null) {
                 data.setPreviousNdvi(previousNdvi);
                 data.setNdviChangePercent(ndviChangePercent);
                 data.setLastComparisonDate(LocalDateTime.now());
@@ -226,13 +226,13 @@ public class ScheduledDataUpdateService {
             double[] bbox = city.getBoundingBox();
             // Use 1000 days to ensure we always find some imagery, even in cloudier regions
             LocalDateTime startWindow = LocalDateTime.now().minusDays(1000);
-            String datetime = startWindow.format(DateTimeFormatter.ISO_DATE_TIME) + "Z/" + 
-                             LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            String dateRange = startWindow.format(formatter) + "/" + LocalDateTime.now().format(formatter);
             
             Map<String, Object> query = new HashMap<>();
             query.put("collections", new String[]{"sentinel-2-l2a"});
             query.put("bbox", bbox);
-            query.put("datetime", datetime);
+            query.put("datetime", dateRange);
             query.put("limit", 1);
             
             // Increased cloud cover tolerance to avoid 'no imagery' errors

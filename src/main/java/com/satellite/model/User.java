@@ -42,7 +42,7 @@ public class User {
     private List<UserAnalysis> analyses;
     
     public enum Role {
-        USER, ADMIN, RESEARCHER
+        ADMIN, USER
     }
     
     // Constructors
