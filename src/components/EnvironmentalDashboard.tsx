@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { satelliteApi } from '../services/api';
 
@@ -18,32 +18,8 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
         retry: false
     });
 
-
-
-    if (!cityName) {
-        return (
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
-                <p className="text-slate-400">Select a city to view environmental risk assessment</p>
-            </div>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
-                <div className="flex items-center justify-center py-12">
-                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="ml-3 text-slate-300 text-lg">Calculating environmental risk...</span>
-                </div>
-            </div>
-        );
-    }
-
-    const latestData = satelliteData?.[0] || {};
-    const hasRealData = latestData.ndviValue !== undefined && latestData.ndviValue !== null && latestData.ndviValue !== 0;
-
     // Calculate Risk Scores based on Real Data or AI Fallback
-    const calculateRisk = (data: any) => {
+    const calculateRisk = useCallback((data: any) => {
         const ndvi = data.ndviValue || 0;
         const defRisk = (data.deforestationRisk || '').toUpperCase();
         const floodVal = Number(data.floodRisk || 0);
@@ -92,17 +68,41 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
             temperature: data.temperature || 0,
             calculationDate: data.analysisDate || new Date().toISOString()
         };
-    };
+    }, []);
 
-    const risk = calculateRisk(latestData);
+    const latestData = useMemo(() => satelliteData?.[0] || {}, [satelliteData]);
+    const risk = useMemo(() => calculateRisk(latestData), [calculateRisk, latestData]);
 
-    const getRiskColor = (level: string) => {
+    const getRiskColor = useCallback((level: string) => {
         switch (level) {
             case 'HIGH_RISK': return { text: 'text-red-500', bg: 'bg-red-500', ring: 'ring-red-500' };
             case 'MODERATE': return { text: 'text-orange-500', bg: 'bg-orange-500', ring: 'ring-orange-500' };
             default: return { text: 'text-green-500', bg: 'bg-green-500', ring: 'ring-green-500' };
         }
-    };
+    }, []);
+
+    const hasRealData = useMemo(() => 
+        latestData.ndviValue !== undefined && latestData.ndviValue !== null && latestData.ndviValue !== 0
+    , [latestData]);
+
+    if (!cityName) {
+        return (
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+                <p className="text-slate-400">Select a city to view environmental risk assessment</p>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+                <div className="flex items-center justify-center py-12">
+                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-3 text-slate-300 text-lg">Calculating environmental risk...</span>
+                </div>
+            </div>
+        );
+    }
 
     const colors = getRiskColor(risk.riskLevel);
     const totalScore = risk.totalScore;
@@ -251,7 +251,7 @@ export function EnvironmentalDashboard({ cityName }: EnvironmentalDashboardProps
                     <div>
                         <div className="text-slate-400">NDVI Value</div>
                         <div className="text-white font-mono font-bold">
-                            {risk.ndvi.toFixed(4)}
+                            {(risk.ndvi || 0).toFixed(4)}
                         </div>
                     </div>
                     <div>

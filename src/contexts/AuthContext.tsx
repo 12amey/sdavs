@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 interface User {
     id: string;
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkSession();
     }, []);
 
-    const login = async (username: string, password: string) => {
+    const login = useCallback(async (username: string, password: string) => {
         try {
             const response = await fetch(`${API_BASE}/user/login`, {
                 method: 'POST',
@@ -108,9 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(fallbackUser);
             localStorage.setItem('sdavs_user', JSON.stringify(fallbackUser));
         }
-    };
+    }, []);
 
-    const logout = () => {
+    const logout = useCallback(() => {
         setUser(null);
         localStorage.removeItem('sdavs_user');
         // Fire-and-forget backend logout
@@ -118,15 +118,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             method: 'POST',
             credentials: 'include'
         }).catch(() => { });
-    };
+    }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         user,
         isAuthenticated: !!user,
         login,
         logout,
         loading,
-    };
+    }), [user, loading, login, logout]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
