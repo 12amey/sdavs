@@ -3,6 +3,7 @@ services:
   - type: web
     name: satellite-python-service
     env: python
+    plan: free
     buildCommand: "cd python-cog-service && pip install -r requirements.txt"
     startCommand: "cd python-cog-service && gunicorn app:app -b 0.0.0.0:10000"
     envVars:
@@ -15,6 +16,7 @@ services:
   - type: web
     name: satellite-java-backend
     env: docker
+    plan: free
     dockerfilePath: Dockerfile.backend
     envVars:
       - key: PYTHON_SERVICE_URL
