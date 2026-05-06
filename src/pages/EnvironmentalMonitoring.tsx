@@ -51,12 +51,15 @@ export default function EnvironmentalMonitoring() {
         return Array.from(cityMap.values()).sort((a, b) => a.city.localeCompare(b.city));
     }, [satelliteData]);
 
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
     // Set initial city when data loads
     useEffect(() => {
-        if (availableCities.length > 0 && !selectedCityName) {
+        if (availableCities.length > 0 && isInitialLoad) {
             setSelectedCityName(availableCities[0].city);
+            setIsInitialLoad(false);
         }
-    }, [availableCities, selectedCityName]);
+    }, [availableCities, isInitialLoad]);
 
     // Find the selected city record for lat/lon
     const selectedCityRecord = useMemo(() =>

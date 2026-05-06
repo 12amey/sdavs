@@ -17,8 +17,22 @@ const months = ['Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26', 'May 26', 'Jun
 
 export default function MLPredictions() {
     const [selectedCity, setSelectedCity] = useState(ALL_SUPPORTED_CITIES[0]);
-    const [loadingCities, setLoadingCities] = useState(true);
     const [realCities, setRealCities] = useState<string[]>([]);
+    const [loadingCities, setLoadingCities] = useState(true);
+    const [trendMeta, setTrendMeta] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    // Memoize constant list to prevent any reference changes
+    const supportedCities = useMemo(() => ALL_SUPPORTED_CITIES, []);
+
+    // Set initial city when data loads
+    useEffect(() => {
+        if (realCities.length > 0 && isInitialLoad) {
+            setSelectedCity(realCities[0]);
+            setIsInitialLoad(false);
+        }
+    }, [realCities, isInitialLoad]);
 
     // Fetch available cities on mount (to check which ones have REAL data)
     useEffect(() => {
@@ -42,9 +56,6 @@ export default function MLPredictions() {
     const [floodData, setFloodData] = useState<any[]>([]);
     const [tempData, setTempData] = useState<any[]>([]);
     const [aqiData, setAqiData] = useState<any[]>([]);
-    const [trendMeta, setTrendMeta] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
-    const [historySource, setHistorySource] = useState<'Real' | 'Simulated'>('Simulated');
 
 
     useEffect(() => {
@@ -194,7 +205,7 @@ export default function MLPredictions() {
                                 onChange={(e) => setSelectedCity(e.target.value)}
                                 className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none min-w-[150px]"
                             >
-                                {ALL_SUPPORTED_CITIES.map(city => (
+                                {supportedCities.map(city => (
                                     <option key={city} value={city}>
                                         {city} {realCities.includes(city) ? '✓' : ''}
                                     </option>

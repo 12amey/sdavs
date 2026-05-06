@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
@@ -53,41 +53,61 @@ export default function AIAnalysis() {
     };
 
     // Extract data with confidence and EuroSAT support
-    const satelliteConfidence = uploadMutation.data?.satelliteConfidence || uploadMutation.data?.validationConfidence || 50;
-    const confidenceCategory = uploadMutation.data?.confidenceCategory || "Unknown"; // shown in analysis
-    const avgNdvi = uploadMutation.data?.ndviStats?.mean || uploadMutation.data?.avgNdvi || 0.650;
-    const histogramData = uploadMutation.isSuccess ? generateHistogramData(avgNdvi) : [];
-    const healthyPercent = uploadMutation.data?.vegetationClassification?.denseVegetation || 0;
+    const satelliteConfidence = useMemo(() => 
+        uploadMutation.data?.satelliteConfidence || uploadMutation.data?.validationConfidence || 50
+    , [uploadMutation.data]);
+
+    const confidenceCategory = useMemo(() => 
+        uploadMutation.data?.confidenceCategory || "Unknown"
+    , [uploadMutation.data]);
+
+    const avgNdvi = useMemo(() => {
+        const val = uploadMutation.data?.ndviStats?.mean ?? uploadMutation.data?.avgNdvi;
+        return typeof val === 'number' ? val : 0.650;
+    }, [uploadMutation.data]);
+
+    const histogramData = useMemo(() => 
+        uploadMutation.isSuccess ? generateHistogramData(avgNdvi) : []
+    , [uploadMutation.isSuccess, avgNdvi]);
+
+    const healthyPercent = useMemo(() => 
+        uploadMutation.data?.vegetationClassification?.denseVegetation || 0
+    , [uploadMutation.data]);
 
     // EuroSAT classification
-    const euroSATClass = uploadMutation.data?.mlClassification?.primary_class || uploadMutation.data?.mlClassification?.primaryClass;
-    const euroSATConfidence = uploadMutation.data?.mlClassification?.confidence || 0;
-    const euroSATDataset = uploadMutation.data?.mlClassification?.dataset || uploadMutation.data?.dataset; // used in analysis
+    const euroSATClass = useMemo(() => 
+        uploadMutation.data?.mlClassification?.primary_class || uploadMutation.data?.mlClassification?.primaryClass
+    , [uploadMutation.data]);
 
-    // Land Cover data - CHECK CONSOLE TO SEE WHAT'S COMING FROM BACKEND
-    const landCover = uploadMutation.data?.land_cover || uploadMutation.data?.landCover || {};
-    const primaryLandUse = uploadMutation.data?.primary_land_use || uploadMutation.data?.primaryLandUse || euroSATClass || 'Unknown';
+    const euroSATConfidence = useMemo(() => 
+        uploadMutation.data?.mlClassification?.confidence || 0
+    , [uploadMutation.data]);
 
-    // Log to see what we're getting
-    if (uploadMutation.isSuccess) {
-        console.log('Full response:', uploadMutation.data);
-        console.log('Land cover:', landCover);
-        console.log('Primary land use:', primaryLandUse);
-    }
+    // Land Cover data
+    const landCover = useMemo(() => 
+        uploadMutation.data?.land_cover || uploadMutation.data?.landCover || {}
+    , [uploadMutation.data]);
+
+    const primaryLandUse = useMemo(() => 
+        uploadMutation.data?.primary_land_use || uploadMutation.data?.primaryLandUse || euroSATClass || 'Unknown'
+    , [uploadMutation.data, euroSATClass]);
 
     // AI Summary with confidence context
-    let aiSummary = uploadMutation.data?.mlClassification?.summary;
-    if (!aiSummary && uploadMutation.isSuccess) {
-        if (satelliteConfidence < 20) {
-            aiSummary = `⚠️ WARNING: This image could not be verified as satellite data (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). Results below are estimates only.`;
-        } else if (satelliteConfidence < 45) {
-            aiSummary = `ℹ️ Image appears to be a satellite export or annotated satellite photo (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). NDVI-equivalent vegetation analysis applied.`;
-        } else if (euroSATClass) {
-            aiSummary = `Analysis complete using EuroSAT dataset: Image classified as "${euroSATClass}" with ${(Number(euroSATConfidence) || 0).toFixed(1)}% confidence. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
-        } else {
-            aiSummary = `Analysis complete: Vegetation health is ${(Number(healthyPercent) || 0).toFixed(1)}% optimal. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
+    const aiSummary = useMemo(() => {
+        let summary = uploadMutation.data?.mlClassification?.summary;
+        if (!summary && uploadMutation.isSuccess) {
+            if (satelliteConfidence < 20) {
+                summary = `⚠️ WARNING: This image could not be verified as satellite data (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). Results below are estimates only.`;
+            } else if (satelliteConfidence < 45) {
+                summary = `ℹ️ Image appears to be a satellite export or annotated satellite photo (${(Number(satelliteConfidence) || 0).toFixed(1)}% confidence). NDVI-equivalent vegetation analysis applied.`;
+            } else if (euroSATClass) {
+                summary = `Analysis complete using EuroSAT dataset: Image classified as "${euroSATClass}" with ${(Number(euroSATConfidence) || 0).toFixed(1)}% confidence. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
+            } else {
+                summary = `Analysis complete: Vegetation health is ${(Number(healthyPercent) || 0).toFixed(1)}% optimal. Satellite imagery confidence: ${(Number(satelliteConfidence) || 0).toFixed(1)}%.`;
+            }
         }
-    }
+        return summary;
+    }, [uploadMutation.data, uploadMutation.isSuccess, satelliteConfidence, euroSATClass, euroSATConfidence, healthyPercent]);
 
     return (
         <div className="space-y-6">
